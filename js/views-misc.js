@@ -144,9 +144,8 @@ App.views.profile = function () {
       <h3>Сброс</h3>
       <p class="hint">Вернуть приложение к начальному состоянию. Все ваши рецепты, записи и фото будут удалены.</p>
       <button class="btn btn-danger-ghost" onclick="Views.resetAll()">Сбросить всё</button>
-    </section>
-
-    <p class="hint"><a href="help.html">📘 Как пользоваться приложением</a></p>`;
+    </section>`;
+  /* ссылки на help.html здесь нет — она живёт в разделе «Ещё», дублировать незачем */
 
   $('#goal-pick').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip');

@@ -318,10 +318,15 @@ textarea.input { resize: vertical; }
 
 /* minmax(0,…) обязателен: иначе колонка не сжимается ниже min-content карточки
    и страница уезжает в горизонтальный скролл */
+/* расстояние между карточками задаёт только gap: собственный margin карточки
+   складывался с ним и давал двойной отступ */
 .home-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.home-grid > .card { margin-bottom: 0; }
+.tip-card { margin-top: 12px; }
 @media (min-width: 760px) { .home-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } }
 
 .today-card { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.today-card .meal-head { margin-bottom: 14px; } /* заголовок и «осталось» не липнут к кольцу и БЖУ */
 .today-card:hover { border-color: #d3e6da; box-shadow: 0 8px 26px rgba(22, 107, 71, 0.08); }
 
 /* кольцо и БЖУ всегда в одну строку — иначе справа от кольца пустой квадрат */
