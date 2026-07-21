@@ -83,6 +83,27 @@ const Modal = {
     document.body.classList.remove('no-scroll');
     $('#modal-card').innerHTML = '';
   },
+  /* Свайп вниз закрывает шторку. Тянем только когда содержимое уже прокручено
+     к верху, иначе жест конфликтует со скроллом внутри модалки. */
+  swipe(card) {
+    let startY = null, dy = 0;
+    card.addEventListener('touchstart', (e) => {
+      startY = card.scrollTop <= 0 ? e.touches[0].clientY : null;
+      dy = 0;
+      card.style.transition = 'none';
+    }, { passive: true });
+    card.addEventListener('touchmove', (e) => {
+      if (startY === null) return;
+      dy = Math.max(0, e.touches[0].clientY - startY);
+      card.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    card.addEventListener('touchend', () => {
+      card.style.transition = '';
+      card.style.transform = '';
+      if (dy > 90) Modal.close();
+      startY = null;
+    });
+  },
   confirm(text, onYes, yesLabel = 'Удалить') {
     this.open(`
       <div class="confirm-box">
@@ -206,6 +227,7 @@ const App = {
     $('#modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') Modal.close();
     });
+    Modal.swipe($('#modal-card'));
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') Modal.close();
     });
@@ -223,7 +245,12 @@ const App = {
     window.scrollTo({ top: 0 });
   },
 
-  refresh() { this.go(this.route.view, this.route.param); },
+  /* перерисовка на месте: экран не должен прыгать вверх после отметки или удаления */
+  refresh() {
+    const y = window.scrollY;
+    this.go(this.route.view, this.route.param);
+    window.scrollTo({ top: y });
+  },
 
   renderNav() {
     // десктопный сайдбар — все разделы

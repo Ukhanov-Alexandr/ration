@@ -34,6 +34,9 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Safari красит текст кнопок в системный синий — гасим в одном месте,
+   свой цвет задают .btn-*, .icon-btn и прочие классы поверх. */
+button { color: inherit; }
 
 body {
   margin: 0;
@@ -313,16 +316,20 @@ textarea.input { resize: vertical; }
 /* На десктопе совет живёт в сайдбаре — карточка только для мобильного */
 @media (min-width: 1000px) { .tip-card { display: none; } }
 
-.home-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-@media (min-width: 760px) { .home-grid { grid-template-columns: 1.5fr 1fr; } }
+/* minmax(0,…) обязателен: иначе колонка не сжимается ниже min-content карточки
+   и страница уезжает в горизонтальный скролл */
+.home-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .home-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } }
 
 .today-card { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .today-card:hover { border-color: #d3e6da; box-shadow: 0 8px 26px rgba(22, 107, 71, 0.08); }
 
-.today-flex { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
-.macros { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 13px; }
+/* кольцо и БЖУ всегда в одну строку — иначе справа от кольца пустой квадрат */
+.today-flex { display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; }
+.macros { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 13px; }
 
-.ring { width: 150px; height: 150px; flex-shrink: 0; }
+.ring { width: 118px; height: 118px; flex-shrink: 0; }
+@media (min-width: 760px) { .today-flex { gap: 26px; } .ring { width: 150px; height: 150px; } }
 .ring-bg { fill: none; stroke: var(--green-soft); stroke-width: 11; }
 .ring-fg {
   fill: none; stroke: var(--green); stroke-width: 11; stroke-linecap: round;
@@ -421,13 +428,21 @@ textarea.input { resize: vertical; }
   vertical-align: middle;
 }
 .num { text-align: right; font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+.num-unit { display: none; } /* «₽/кг» нужен только на телефоне, где нет заголовка колонки */
 .num-p { color: var(--num-p); }
 .num-f { color: var(--num-f); }
 .num-c { color: var(--num-c); }
 
 @media (max-width: 560px) {
-  .prod-row { grid-template-columns: 26px 1fr 46px 40px 40px 40px; gap: 6px; }
-  .prod-row .num:last-child { display: none; } /* цена ₽/кг */
+  .prod-row { grid-template-columns: 26px 1fr 46px 40px 40px 40px; gap: 3px 6px; }
+  /* седьмой колонки на телефоне нет: заголовок «₽/кг» прячем, а саму цену
+     переносим второй строкой под название — иначе она падала на новую строку сама */
+  .table-head span:last-child { display: none; }
+  .prod-row .num:last-child { grid-column: 2; text-align: left; font-size: 11px; line-height: 1.2; color: var(--micro); }
+  .card-row { padding: 9px 14px; }
+  .prod-emoji { line-height: 1; }
+  .prod-row .num:last-child:empty { display: none; }
+  .num-unit { display: inline; }
   .num { font-size: 12px; }
   .prod-name { font-size: 13px; }
   .table-head { padding: 10px 12px; }
@@ -806,15 +821,26 @@ textarea.input { resize: vertical; }
 .modal-card {
   background: var(--card);
   border-radius: 18px 18px 0 0;
-  padding: 22px 24px;
+  padding: 22px 24px calc(22px + env(safe-area-inset-bottom));
   width: 100%;
   max-width: 560px;
   max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 24px 60px -18px rgba(28, 33, 29, .5);
   animation: slide-up 0.22s cubic-bezier(.2, .8, .3, 1);
+  transition: transform .2s;
 }
 .modal-card.wide { max-width: 620px; }
+
+/* ручка: показывает, что шторку можно смахнуть вниз (Modal.swipe в app.js) */
+.modal-card::before {
+  content: '';
+  display: block;
+  width: 38px; height: 4px;
+  margin: -10px auto 14px;
+  border-radius: 99px;
+  background: #dcdcd6;
+}
 
 @keyframes slide-up {
   from { transform: translateY(40px); opacity: 0; }
@@ -827,7 +853,8 @@ textarea.input { resize: vertical; }
 
 @media (min-width: 640px) {
   #modal { align-items: center; padding: 24px; }
-  .modal-card { border-radius: 18px; animation: pop-in 0.2s cubic-bezier(.2, .8, .3, 1); }
+  .modal-card { border-radius: 18px; padding-bottom: 22px; animation: pop-in 0.2s cubic-bezier(.2, .8, .3, 1); }
+  .modal-card::before { display: none; }
 }
 
 .confirm-box p { font-weight: 500; font-size: 15px; }

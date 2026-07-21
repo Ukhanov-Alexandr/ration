@@ -122,11 +122,6 @@ App.views.home = function () {
       </div>
     </header>
 
-    <div class="tip-card card">
-      <span class="tip-emoji">💡</span>
-      <div><div class="tip-label">Совет дня</div><div class="tip-text">${esc(tip)}</div></div>
-    </div>
-
     <div class="home-grid">
       <section class="card today-card" onclick="App.go('diary')">
         <div class="meal-head">
@@ -165,6 +160,11 @@ App.views.home = function () {
           ? `<p class="group-label">Осталось по плану</p><ul class="diary-list">${planRows}</ul>`
           : (entries.length ? '' : `<p class="hint">Плана на сегодня нет. <a href="#" onclick="App.go('planner');return false">Запланировать меню →</a></p>`)}
       </section>
+    </div>
+
+    <div class="tip-card card">
+      <span class="tip-emoji">💡</span>
+      <div><div class="tip-label">Совет дня</div><div class="tip-text">${esc(tip)}</div></div>
     </div>`;
 };
 
@@ -262,7 +262,7 @@ Views.renderProductList = function () {
         <span class="num num-p">${fmt1(p.p)}</span>
         <span class="num num-f">${fmt1(p.f)}</span>
         <span class="num num-c">${fmt1(p.c)}</span>
-        <span class="num">${p.price ? fmt(p.price) : '—'}</span>
+        <span class="num">${p.price ? fmt(p.price) + ' <span class="num-unit">₽/кг</span>' : ''}</span>
       </div>`).join('')}`
     : `<div class="empty">Ничего не нашлось 🤔<br><small>Попробуйте другой запрос или добавьте свой продукт</small></div>`;
 };
