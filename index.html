@@ -53,5 +53,11 @@
   <script src="js/views-track.js"></script>
   <script src="js/views-plan.js"></script>
   <script src="js/views-misc.js"></script>
+  <script>
+    // из файла (file://) воркер не регистрируется — приложение просто работает без него
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>
