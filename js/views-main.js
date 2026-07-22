@@ -307,12 +307,15 @@ Views.openProduct = function (id) {
   upd();
 };
 
-Views.editProduct = function (id) {
+/* opts.name — предзаполнить название (например, из строки ингредиента)
+   opts.onSaved(id) / opts.onCancel() — куда вернуться вместо закрытия модалки:
+   продукт можно заводить из формы рецепта, и её черновик нельзя терять. */
+Views.editProduct = function (id, opts = {}) {
   const p = id ? Calc.product(id) : null;
   Modal.open(`
     <h2>${p ? 'Изменить продукт' : 'Новый продукт'}</h2>
     <form id="prod-form" class="form">
-      <label>Название<input class="input" name="name" required value="${esc(p?.name || '')}" placeholder="Например: Сыр адыгейский"></label>
+      <label>Название<input class="input" name="name" required value="${esc(p?.name || opts.name || '')}" placeholder="Например: Сыр адыгейский"></label>
       <div class="form-row">
         <label>Категория<select class="input" name="cat">
           ${SEED_CATEGORIES.map(c => `<option value="${c.id}" ${p?.cat === c.id ? 'selected' : ''}>${c.emoji} ${c.name}</option>`).join('')}
@@ -329,10 +332,11 @@ Views.editProduct = function (id) {
       <label>Цена, ₽ за кг <small>(необязательно — для прикидки стоимости покупок)</small>
         <input class="input" name="price" type="number" step="1" min="0" value="${p?.price ?? ''}" placeholder="напр. 350"></label>
       <div class="form-actions">
-        <button type="button" class="btn btn-ghost" onclick="Modal.close()">Отмена</button>
+        <button type="button" class="btn btn-ghost" id="prod-cancel">Отмена</button>
         <button type="submit" class="btn btn-primary">Сохранить</button>
       </div>
     </form>`);
+  $('#prod-cancel').onclick = () => (opts.onCancel ? opts.onCancel() : Modal.close());
   $('#prod-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -342,14 +346,18 @@ Views.editProduct = function (id) {
       f: parseFloat(f.get('f')) || 0, c: parseFloat(f.get('c')) || 0,
       price: parseFloat(f.get('price')) || null,
     };
+    let prodId;
     if (p) {
       Object.assign(p, data);
+      prodId = p.id;
       Toast.show('Продукт обновлён ✅');
     } else {
-      App.state.products.push({ id: uid(), custom: true, ...data });
+      prodId = uid();
+      App.state.products.push({ id: prodId, custom: true, ...data });
       Toast.show('Продукт добавлен ✅');
     }
     App.save();
+    if (opts.onSaved) { opts.onSaved(prodId); return; }
     Modal.close();
     if (App.route.view === 'products') Views.renderProductList();
   });

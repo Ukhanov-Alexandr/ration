@@ -203,6 +203,7 @@ Views.renderAddResults = function () {
 Views.addNewDish = function () {
   Views.editRecipe(null, {
     name: AddDiary.search.trim(),
+    cat: (MEAL_RECIPE_CATS[AddDiary.meal] || [])[0],
     onSaved: (rid) => { AddDiary.type = 'recipe'; AddDiary.refId = rid; Views.renderAddDiaryStep2(); },
   });
 };

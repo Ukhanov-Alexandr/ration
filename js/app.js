@@ -86,23 +86,33 @@ const Modal = {
   /* Свайп вниз закрывает шторку. Тянем только когда содержимое уже прокручено
      к верху, иначе жест конфликтует со скроллом внутри модалки. */
   swipe(card) {
-    let startY = null, dy = 0;
+    let startY = null, dy = 0, frame = 0;
+    const wrap = card.parentElement;
     card.addEventListener('touchstart', (e) => {
       startY = card.scrollTop <= 0 ? e.touches[0].clientY : null;
       dy = 0;
       card.style.transition = 'none';
     }, { passive: true });
     /* Не passive: пока тянем шторку, браузеру нужно запретить прокрутку —
-       иначе вместе со шторкой едет вся страница под ней. */
+       иначе вместе со шторкой едет вся страница под ней.
+       Сам transform пишем не на каждое событие (палец шлёт их чаще, чем экран
+       перерисовывается), а один раз на кадр — иначе жест дёргается. */
     card.addEventListener('touchmove', (e) => {
       if (startY === null) return;
       dy = Math.max(0, e.touches[0].clientY - startY);
-      if (dy > 0) e.preventDefault();
-      card.style.transform = `translateY(${dy}px)`;
+      if (dy <= 0) return;
+      e.preventDefault();
+      wrap.classList.add('dragging');
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
+        card.style.transform = `translateY(${dy}px)`;
+      });
     }, { passive: false });
     card.addEventListener('touchend', () => {
+      if (frame) { cancelAnimationFrame(frame); frame = 0; }
       card.style.transition = '';
       card.style.transform = '';
+      wrap.classList.remove('dragging');
       if (dy > 90) Modal.close();
       startY = null;
     });
@@ -132,8 +142,18 @@ const Calc = {
     return { kcal: prod.kcal * k, p: prod.p * k, f: prod.f * k, c: prod.c * k };
   },
 
-  /* БЖУ рецепта: total и на 1 порцию */
+  /* БЖУ рецепта: total и на 1 порцию.
+     У «быстрых» блюд (съел что-то своё) ингредиентов нет — БЖУ задан руками
+     на порцию и лежит в recipe.manual. */
   recipeMacros(recipe) {
+    if (recipe.manual) {
+      const s = Math.max(1, recipe.servings || 1);
+      const m = recipe.manual;
+      return {
+        total: { kcal: m.kcal * s, p: m.p * s, f: m.f * s, c: m.c * s },
+        perServing: { ...m },
+      };
+    }
     const total = { kcal: 0, p: 0, f: 0, c: 0 };
     for (const ing of recipe.ing) {
       const prod = this.product(ing.p);
