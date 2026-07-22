@@ -181,6 +181,9 @@ Views.renderAddResults = function () {
   const products = q ? App.state.products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 30) : [];
   const mealName = MEALS.find(m => m.id === AddDiary.meal)?.name || '';
   $('#add-results').innerHTML = `
+    <button class="add-item add-new" onclick="Views.addNewDish()">
+      <span>➕</span><span class="add-name">${q ? `Своё блюдо: «${esc(AddDiary.search.trim())}»` : 'Съел что-то своё — записать'}</span><small>в рецепты</small>
+    </button>
     ${recipes.length ? `<p class="group-label">Рецепты${!q ? ' · ' + mealName : ''}</p>` + recipes.map(r => {
       const m = Calc.recipeMacros(r).perServing;
       return `<button class="add-item" onclick="AddDiary.type='recipe';AddDiary.refId='${r.id}';Views.renderAddDiaryStep2()">
@@ -195,6 +198,15 @@ Views.renderAddResults = function () {
     ${!recipes.length && !products.length && q ? '<div class="empty">Не нашлось 🤔</div>' : ''}`;
 };
 
+/* Самый частый сценарий: съел не то, что в плане. Заводим блюдо прямо отсюда —
+   оно сохраняется в «Рецепты», и диалог сразу возвращается к записи порций. */
+Views.addNewDish = function () {
+  Views.editRecipe(null, {
+    name: AddDiary.search.trim(),
+    onSaved: (rid) => { AddDiary.type = 'recipe'; AddDiary.refId = rid; Views.renderAddDiaryStep2(); },
+  });
+};
+
 /* Шаг 2: количество и приём пищи */
 Views.renderAddDiaryStep2 = function () {
   const isProduct = AddDiary.type === 'product';
@@ -206,7 +218,10 @@ Views.renderAddDiaryStep2 = function () {
     <h2>${item.emoji} ${esc(item.name)}</h2>
     <form id="add-form" class="form">
       <label>${isProduct ? 'Сколько граммов?' : 'Сколько порций?'}
-        <input class="input" type="number" id="add-amount" min="${isProduct ? 1 : 0.5}" step="${isProduct ? 1 : 0.5}" value="${defaultAmount}">
+        ${isProduct
+          ? `<input class="input" type="number" id="add-amount" min="1" step="1" value="${defaultAmount}">`
+          /* select — на iOS это родное колесо-барабан, своего писать не нужно */
+          : `<select class="input" id="add-amount">${[1, 2, 3, 4].map(n => `<option ${n === 1 ? 'selected' : ''}>${n}</option>`).join('')}</select>`}
       </label>
       <div id="add-macros" class="badges"></div>
       <label>Приём пищи

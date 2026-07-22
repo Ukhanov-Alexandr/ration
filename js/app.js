@@ -92,11 +92,14 @@ const Modal = {
       dy = 0;
       card.style.transition = 'none';
     }, { passive: true });
+    /* Не passive: пока тянем шторку, браузеру нужно запретить прокрутку —
+       иначе вместе со шторкой едет вся страница под ней. */
     card.addEventListener('touchmove', (e) => {
       if (startY === null) return;
       dy = Math.max(0, e.touches[0].clientY - startY);
+      if (dy > 0) e.preventDefault();
       card.style.transform = `translateY(${dy}px)`;
-    }, { passive: true });
+    }, { passive: false });
     card.addEventListener('touchend', () => {
       card.style.transition = '';
       card.style.transform = '';

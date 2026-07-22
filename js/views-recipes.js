@@ -201,7 +201,9 @@ Views.randomRecipe = function (cat = null) {
 
 const RecipeForm = { ing: [], photoData: undefined };
 
-Views.editRecipe = function (id) {
+/* opts.name — предзаполнить название (из поиска в «что добавить?»)
+   opts.onSaved(recId) — куда вернуться после сохранения вместо закрытия модалки */
+Views.editRecipe = function (id, opts = {}) {
   const r = id ? Calc.recipe(id) : null;
   RecipeForm.ing = r ? r.ing.map(i => ({ ...i })) : [{ p: '', g: 100 }];
   RecipeForm.photoData = undefined; // undefined = не менять, null = удалить
@@ -210,7 +212,7 @@ Views.editRecipe = function (id) {
   Modal.open(`
     <h2>${r ? 'Изменить рецепт' : 'Новый рецепт'}</h2>
     <form id="rec-form" class="form">
-      <label>Название<input class="input" name="name" required value="${esc(r?.name || '')}" placeholder="Например: Бабушкин борщ на курином бульоне"></label>
+      <label>Название<input class="input" name="name" required value="${esc(r?.name || opts.name || '')}" placeholder="Например: Бабушкин борщ на курином бульоне"></label>
       <div class="form-row">
         <label>Категория<select class="input" name="cat">
           ${RECIPE_CATS.map(c => `<option ${r?.cat === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -298,6 +300,7 @@ Views.editRecipe = function (id) {
     if (RecipeForm.photoData) await Photos.put(recId, RecipeForm.photoData);
     else if (RecipeForm.photoData === null) await Photos.del(recId);
     App.save();
+    if (opts.onSaved) { opts.onSaved(recId); return; }
     Modal.close();
     App.refresh();
   });
